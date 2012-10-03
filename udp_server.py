@@ -1,5 +1,7 @@
 import SocketServer
-import random
+import os
+
+PATH = '/tmp/checkin'
 
 class CheckinCounter(SocketServer.BaseRequestHandler):
 
@@ -7,8 +9,8 @@ class CheckinCounter(SocketServer.BaseRequestHandler):
 	print "Got Request"
         status = '0'
         data = self.request[0].strip()
-	prob = random.random()	
-	if (data == 'c' and random > 0.8):
+	if (data == 'c' and os.path.isfile(PATH)):
+	    os.delete(PATH)
 	    status = '1'
         socket = self.request[1]
 	print "Got data: " + status

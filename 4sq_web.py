@@ -8,6 +8,7 @@ CherryPyWSGIServer.ssl_certificate = "/tmp/cacert.pem"
 CherryPyWSGIServer.ssl_private_key = "/tmp/server.pem"
 
 DEBUG=0
+FILE='/tmp/checkin'
 
 cis = defaultdict(int);
 
@@ -24,6 +25,9 @@ class hello:
 	if form['type'] == 'checkin':
 	    uid = 'user' + str(form['user']['id'])
 	    cis[uid] += 1
+	    file = open('w', FILE)
+	    file.write('checkin')
+	    file.close()
 	    return "Count: " + str(cis[uid])
         return 'Unknown command' 
 
