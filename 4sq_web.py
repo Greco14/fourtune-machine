@@ -3,32 +3,34 @@ from web.wsgiserver import CherryPyWSGIServer
 from collections import defaultdict
 
 import json
+import shelve
+import os
 
-CherryPyWSGIServer.ssl_certificate = "/tmp/cacert.pem"
-CherryPyWSGIServer.ssl_private_key = "/tmp/server.pem"
+cdir = os.getcwd()
+CherryPyWSGIServer.ssl_certificate = cdir + "/ssl/server.crt"
+CherryPyWSGIServer.ssl_private_key = cdir + "/ssl/server.key"
 
 DEBUG=0
 FILE='/tmp/checkin'
 
-cis = defaultdict(int);
-
-urls = ("/.*", "hello")
+urls = ("/.*", "savecheckin")
 app = web.application(urls, globals())
 
-class hello:
+class savecheckin:
     def GET(self):
-        return 'Hello, world!'
+        return 'Check In storage'
 
     def POST(self):
-    	input = web.input()
-	form = json.loads(web.data())
-	if form['type'] == 'checkin':
-	    uid = 'user' + str(form['user']['id'])
-	    cis[uid] += 1
-	    file = open('w', FILE)
-	    file.write('checkin')
-	    file.close()
-	    return "Count: " + str(cis[uid])
+        form = json.loads(web.data())
+        if form['type'] == 'checkin':
+            s = shelve.open(FILE)
+            if not 'checkins' in s:
+                s['checkins'] = []
+            ci = s['checkins']
+            ci.append(1)
+            s['checkins'] = ci
+            s.close()
+            return "Checked in"
         return 'Unknown command' 
 
 if __name__ == "__main__":
