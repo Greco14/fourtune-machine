@@ -21,8 +21,8 @@ class savecheckin:
         return 'Check In storage'
 
     def POST(self):
-        form = json.loads(web.data())
-        if form['type'] == 'checkin':
+        form =  web.data()
+        if form.find('checkin') == 0:
             s = shelve.open(FILE)
             if not 'checkins' in s:
                 s['checkins'] = []
