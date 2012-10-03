@@ -10,13 +10,13 @@ class CheckinCounter(SocketServer.BaseRequestHandler):
         status = '0'
         data = self.request[0].strip()
         s = shelve.open(FILE)
-        if not 'checkin' in s:
-            s['checkin'] = []
-        ci = s['checkin']
+        if not 'checkins' in s:
+            s['checkins'] = []
+        ci = s['checkins']
         if data == 'c' and len(ci) > 0:
             ci.pop()
             status = '1'
-        s['checkin'] = ci
+        s['checkins'] = ci
         s.close()
         socket = self.request[1]
         socket.sendto(status, self.client_address)
