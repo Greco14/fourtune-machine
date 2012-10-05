@@ -2,73 +2,65 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>     // UDP library from: bjoern@cs.stanford.edu 12/30/2008
 
-
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
-byte mac[] = {  
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-IPAddress remoteIp(66, 228, 50, 204);
-IPAddress localIp(192, 168, 1, 201);
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+IPAddress server(66, 228, 50, 204);
+IPAddress address(192, 168, 1, 201);
+unsigned int port = 2323, packetSize, checkin, secs = 5000; // UDP port on server
 
-unsigned int localPort = 2323;      // local port to listen on
-
-// buffers for receiving and sending data
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
-char  ReplyBuffer[] = "c" ;      
+// Buffer to hold incoming packet
+char packetBuffer[UDP_TX_PACKET_MAX_SIZE], command[] = "c";
 
 // An EthernetUDP instance to let us send and receive packets over UDP
 EthernetUDP Udp;
-int motor=3;
+int motor = 3;// The pin for the motor to use
 
-void setup() {
-  // start the Ethernet and UDP:
-  Ethernet.begin(mac,localIp);
-  Udp.begin(localPort);
+void setup() 
+{
+  // Request DHCP for address or use default
+  if (Ethernet.begin(mac)) {
+    Serial.print("Obtenida IP: ");
+    Serial.println(Ethernet.localIP());
+  } else {
+    Ethernet.begin(mac, address);
+  }
+    
+  Udp.begin(port);
   Serial.begin(9600);
   
+  // Set the motor PIN
   pinMode(motor,OUTPUT);
 }
 
-void loop() {
-  // if there's data available, read a packet
-  Serial.println ("iniciando envio de paquete");
-    Udp.beginPacket(remoteIp, localPort);
-    Udp.write(ReplyBuffer);
-    Udp.endPacket();
+void loop()
+{
+  // Send a request for checkin status on our
+  // UDP server
+  Serial.println ("Sending request...");
+  Udp.beginPacket(server, port);
+  Udp.write(command);
+  Udp.endPacket();
     
-   int packetSize = Udp.parsePacket();
+  int packetSize = Udp.parsePacket();
      
-  if(packetSize)
-  {
-    Serial.print("Received packet of size ");
-    Serial.println(packetSize);
-    Serial.print("From ");
+  if (packetSize) {
     IPAddress remote = Udp.remoteIP();
-    for (int i =0; i < 4; i++)
-    {
-      Serial.print(remote[i], DEC);
-      if (i < 3)
-      {
-        Serial.print(".");
-      }
-    }
-    Serial.print(", port ");
-    Serial.println(Udp.remotePort());
-
-    // read the packet into packetBufffer
+    // Read the packet into packetBufffer
     Udp.read(packetBuffer,UDP_TX_PACKET_MAX_SIZE);
-    Serial.println( );
+    Serial.println("Recived: ");
     Serial.println(packetBuffer);
-
-    // send a reply, to the IP address and port that sent us the packet we received
-   if (Serial.available() > 0) {
-
-       digitalWrite(motor, HIGH);
-   }else{
-        digitalWrite(motor, LOW);
-   }          
-      
+    checkin = atoi(packetBuffer);  
+    
+    // Activate the motor if we have a checkin
+    if (checkin == 1) {
+      Serial.println("Activating the motor");
+      digitalWrite(motor, HIGH);
+      delay(1000);
+      digitalWrite(motor, LOW);
+    } 
   }
-  delay(1000);
+  
+  delay(secs);
 }
 
