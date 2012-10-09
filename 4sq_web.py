@@ -13,7 +13,11 @@ CherryPyWSGIServer.ssl_private_key = cdir + "/ssl/server.key"
 DEBUG=0
 FILE='/tmp/checkin'
 
-urls = ("/.*", "savecheckin")
+urls = (
+    "/", "savecheckin",
+    "/callback", "callback"
+    )
+
 app = web.application(urls, globals())
 
 class savecheckin:
@@ -32,6 +36,10 @@ class savecheckin:
             s.close()
             return "Checked in"
         return 'Unknown command' 
+
+class callback:
+    def GET(self):
+        return 'callback'
 
 if __name__ == "__main__":
     app.run()
